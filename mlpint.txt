@@ -1,0 +1,409 @@
+EXPERIMENT-1  FIND - S ALGORITHM :
+
+students.csv
+
+
+
+data = """ex,PG,year,CGPA,sports,interest,scholarship
+1,MCA,2,high,yes,Dance,yes
+2,MCA,2,high,no,Dance,yes
+3,MCA,1,high,yes,Music,no
+4,MBA,2,high,yes,Dance,no
+5,MCA,2,medium,yes,Dance,yes
+"""
+
+with open("students.csv", "w") as f:
+    f.write(data)
+
+print("students.csv created successfully!")
+
+
+
+CODE :
+
+
+
+import pandas as pd
+df = pd.read_csv("students.csv")
+pos = df[df['scholarship'].str.lower() == 'yes']
+hypothesis = list(pos.iloc[0, :-1])
+for i, row in pos.iterrows():
+    example = list(row[:-1])
+    for j in range(len(hypothesis)):
+        if hypothesis[j] != example[j]:
+            hypothesis[j] = '?'
+print("Final hypothesis:", hypothesis)
+
+
+EXPERIMENT-2  Candidate-Elimination
+
+students.csv
+
+
+
+data = """ex,PG,year,CGPA,sports,interest,scholarship
+1,MCA,2,high,yes,Dance,yes
+2,MCA,2,high,no,Dance,yes
+3,MCA,1,high,yes,Music,no
+4,MBA,2,high,yes,Dance,no
+5,MCA,2,medium,yes,Dance,yes
+"""
+
+with open("students.csv", "w") as f:
+    f.write(data)
+
+print("students.csv created successfully!")
+
+
+CODE:
+
+import csv
+
+def load_csv(filename):
+    with open(filename, 'r') as f:
+        return list(csv.reader(f))[1:]  # Skip header row
+
+def candidate_elimination(data):
+    s = ['0'] * (len(data[0]) - 1)
+    g = ['?'] * (len(data[0]) - 1)
+
+    for row in data:
+        attrs, target = row[:-1], row[-1]
+
+        if target.lower() == 'yes':
+            for i in range(len(s)):
+                if s[i] == '0':
+                    s[i] = attrs[i]
+                elif s[i] != attrs[i]:
+                    s[i] = '?'
+        else:  # target == 'no'
+            for i in range(len(s)):
+                if s[i] != '?' and s[i] == attrs[i]:
+                    g[i] = '?'
+
+    print("Final Specific Hypothesis:", s)
+    print("Final General Hypothesis:", g)
+
+
+data = load_csv('students.csv')
+candidate_elimination(data)
+
+
+EXPERIMENT-3 – ID3 Decision Tree
+
+CODE:
+
+
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier, export_text
+data = {
+    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain',
+                'Overcast', 'Sunny', 'Sunny', 'Rain', 'Sunny', 'Overcast',
+                'Overcast', 'Rain'],
+    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool',
+                    'Cool', 'Mild', 'Cool', 'Mild', 'Mild', 'Mild',
+                    'Hot', 'Mild'],
+    'Humidity': ['High', 'High', 'High', 'High', 'Normal', 'Normal',
+                 'Normal', 'High', 'Normal', 'Normal', 'Normal', 'High',
+                 'Normal', 'High'],
+    'Wind': ['Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Strong',
+             'Strong', 'Weak', 'Weak', 'Weak', 'Strong', 'Strong',
+             'Weak', 'Strong'],
+    'PlayTennis': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No',
+                   'Yes', 'No', 'Yes', 'Yes', 'Yes', 'Yes',
+                   'Yes', 'No']
+}
+df = pd.DataFrame(data)
+X = df.drop(columns=['PlayTennis'])
+y = df['PlayTennis']
+X = pd.get_dummies(X)
+model = DecisionTreeClassifier(criterion="entropy")
+model.fit(X, y)
+tree_rules = export_text(model, feature_names=list(X.columns))
+print(tree_rules)
+new_sample = pd.DataFrame([{
+    'Outlook': 'Overcast',
+    'Temperature': 'Mild',
+    'Humidity': 'Normal',
+    'Wind': 'Weak'
+}])
+new_sample_encoded = pd.get_dummies(new_sample)
+new_sample_encoded = new_sample_encoded.reindex(columns=X.columns, fill_value=0)
+prediction = model.predict(new_sample_encoded)
+print("Prediction for new sample:", prediction[0])
+
+
+
+EXPERIMENT 4 – KNN (Iris)
+
+
+
+CODE :
+
+
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+iris = load_iris()
+X = iris.data
+y = iris.target
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+knn = KNeighborsClassifier(n_neighbors=3)
+knn.fit(X_train, y_train)
+y_pred = knn.predict(X_test)
+print("Correct:", (y_pred == y_test).sum())
+print("Wrong:", (y_pred != y_test).sum())
+print("Accuracy:", accuracy_score(y_test, y_pred))
+
+
+EXPERIMENT 5 – ANN Backpropagation (MLP)
+
+
+
+CODE:
+
+import numpy as np
+
+# Sigmoid activation function and derivative
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# XOR Input & Output
+X = np.array([[0,0],
+              [0,1],
+              [1,0],
+              [1,1]])
+
+y = np.array([[0],[1],[1],[0]])
+
+# Initialize weights and biases
+np.random.seed(42)
+weights1 = np.random.rand(2,2)
+weights2 = np.random.rand(2,1)
+bias1 = np.random.rand(1,2)
+bias2 = np.random.rand(1,1)
+
+lr = 0.5   # learning rate
+epochs = 10000  # training cycles
+
+# Training using Backpropagation
+for _ in range(epochs):
+    # Forward pass
+    hidden = sigmoid(np.dot(X, weights1) + bias1)
+    output = sigmoid(np.dot(hidden, weights2) + bias2)
+    
+    # Error calculation
+    error = y - output
+
+    # Backpropagation
+    d_output = error * sigmoid_derivative(output)
+    error_hidden = d_output.dot(weights2.T)
+    d_hidden = error_hidden * sigmoid_derivative(hidden)
+    
+    # Update weights & biases
+    weights2 += hidden.T.dot(d_output) * lr
+    weights1 += X.T.dot(d_hidden) * lr
+    bias2 += np.sum(d_output, axis=0, keepdims=True) * lr
+    bias1 += np.sum(d_hidden, axis=0, keepdims=True) * lr
+
+# Final Output
+print("Final output after training:")
+print(output)
+
+
+
+
+
+EXPERIMENT 6 – Naive Bayes(CSV)
+
+
+data = """Feature1,Feature2,Class
+1,1,yes
+1,0,no
+0,1,yes
+0,0,no
+"""
+
+with open("nb_data.csv", "w") as f:
+    f.write(data)
+
+print("nb_data.csv created successfully!")
+
+
+CODE: 
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+df = pd.read_csv("nb_data.csv")
+X = df.iloc[:, :-1]
+y = df.iloc[:, -1]
+X = pd.get_dummies(X)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=0
+)
+nb = GaussianNB()
+nb.fit(X_train, y_train)
+y_pred = nb.predict(X_test)
+print("Accuracy:", accuracy_score(y_test, y_pred))
+new_samples = pd.DataFrame([
+    {'PG': 'MCA', 'year': 1, 'CGPA': 'high', 'sports': 'yes', 'interest': 'Music'},
+    {'PG': 'MBA', 'year': 2, 'CGPA': 'medium', 'sports': 'no', 'interest': 'Dance'}
+])
+new_samples = pd.get_dummies(new_samples)
+new_samples = new_samples.reindex(columns=X.columns, fill_value=0)
+print("Predictions for new samples:", nb.predict(new_samples))
+
+
+EXPERIMENT 7 – Bayesian Network (Heart)
+heart.csv
+
+
+Age,Cholesterol,BP,HeartDisease
+0,1,1,1
+1,2,0,1
+1,1,1,0
+2,0,0,0
+0,2,1,1
+2,1,0,1
+1,0,1,0
+0,1,0,0
+2,2,1,1
+1,1,0,0
+
+CODE:
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.naive_bayes import CategoricalNB
+from sklearn.metrics import accuracy_score
+data = pd.read_csv("heart.csv")
+le = {}
+for col in data.columns:
+    le[col] = LabelEncoder()
+    data[col] = le[col].fit_transform(data[col])
+X = data[['Age', 'Cholesterol', 'BP']]
+y = data['HeartDisease']
+model = CategoricalNB()
+model.fit(X, y)
+sample = [[2, 1, 0]]
+prediction = model.predict(sample)[0]
+print("Prediction:", prediction)
+
+
+
+
+EXPERIMENT 8 – Naive Bayes Text Classification
+
+
+
+CODE :
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, precision_score, recall_score, classification_report
+documents = [
+    "I love programming in python",
+    "Python is a great language",
+    "I enjoy machine learning",
+    "Machine learning is fun",
+    "I hate bugs in my code",
+    "Debugging code is frustrating",
+    "I dislike syntax errors",
+    "Errors in code make me sad"
+]
+labels = [
+    "positive", "positive", "positive", "positive",
+    "negative", "negative", "negative", "negative"
+]
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(documents)
+y = labels
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42
+)
+model = MultinomialNB()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, pos_label='positive')
+recall = recall_score(y_test, y_pred, pos_label='positive')
+print("Predicted Labels:", y_pred)
+print("Accuracy:", accuracy)
+print("Precision (positive class):", precision)
+print("Recall (positive class):", recall)
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+
+
+EXPERIMENT 9 – EM (GMM) vs KMeans
+
+
+CODE: 
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="sklearn.cluster._kmeans")
+import os
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import silhouette_score
+os.environ["OMP_NUM_THREADS"] = "1"
+X = np.array([
+    [1.0, 2.0, 1.5, 2.5],
+    [5.0, 6.0, 5.5, 6.5],
+    [9.0, 8.0, 9.5, 8.5]
+])
+kmeans = KMeans(n_clusters=2, random_state=42, n_init=10)
+kmeans_labels = kmeans.fit_predict(X)
+em = GaussianMixture(n_components=2, random_state=42, covariance_type='full')
+em_labels = em.fit_predict(X)
+kmeans_score = silhouette_score(X, kmeans_labels)
+em_score = silhouette_score(X, em_labels)
+print("K-Means Cluster Centers:\n", kmeans.cluster_centers_)
+print("\nEM Means:\n", em.means_)
+print("\nSilhouette Score (K-Means):", round(kmeans_score, 3))
+print("Silhouette Score (EM):", round(em_score, 3))
+if em_score > kmeans_score:
+    print("\nEM algorithm produced better clustering quality.")
+else:
+    print("\nK-Means algorithm produced better clustering quality.")
+
+
+
+
+EXPERIMENT 10 – LWR
+ 
+CODE:
+
+import numpy as np
+import matplotlib.pyplot as plt
+X = np.linspace(-3, 3, 30)
+Y = np.sin(X) + np.random.randn(30) * 0.1
+def lwr(x, X, Y, tau):
+    y_pred = []
+    for x0 in x:
+        W = np.exp(- (X - x0)**2 / (2 * tau**2))
+        W = np.diag(W)
+        X_mat = np.vstack((np.ones(len(X)), X)).T
+        theta = np.linalg.pinv(X_mat.T @ W @ X_mat) @ (X_mat.T @ W @ Y)
+        y_pred.append([1, x0] @ theta)
+    return np.array(y_pred)
+X_test = np.linspace(-3, 3, 100)
+Y_pred = lwr(X_test, X, Y, tau=0.5)
+plt.scatter(X, Y, color='red', label='Data')
+plt.plot(X_test, Y_pred, color='blue', label='LWR Curve')
+plt.title("Locally Weighted Regression")
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.legend()
+plt.show()
+
+
